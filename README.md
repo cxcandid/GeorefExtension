@@ -27,15 +27,15 @@ I will explain each list item later.
 The extension consists of an additional Georeferencer toolbar with 3 buttons and a dialog for the VRT options:
 
 
-![GeorefExtension Toolbar](file:///./images/toolbar.jpg)
+![GeorefExtension Toolbar](./images/toolbar.jpg)
 
 |         |         |
 | ------- | ------- |
-| ![Set Background Color](file:///./icons/color.png) | Set Background Color |
-| ![Delete all GCPs](file:///./icons/delete.png) | Delete all GCPs |
-| ![Create Virtual Raster](file:///./icons/go.png) | Create Virtual Raster |
+| ![Set Background Color](./icons/color.png) | Set Background Color |
+| ![Delete all GCPs](./icons/delete.png) | Delete all GCPs |
+| ![Create Virtual Raster](./icons/go.png) | Create Virtual Raster |
 
-![Georeferencer Dialog](file:///./images/georeferencer.jpg)
+![Georeferencer Dialog](./images/georeferencer.jpg)
 
 The "Create Virtual Raster" dialog is only shown if a raster is loaded into the Georeferencer Map Canvas and the button "Create Virtual Raster" is pressed.
 
@@ -77,7 +77,7 @@ Not important, but sometimes helpful if we can delete all GCPs with the click of
 
 ## The Create Virtual Raster dialog
 
-![GeorefExtension Dialog](file:///./images/dialog.jpg)
+![GeorefExtension Dialog](./images/dialog.jpg)
 
 |         |         |
 | ------- | ------- |
