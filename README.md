@@ -69,7 +69,7 @@ This allows us to select individual features using the QGIS `Copy Features` comm
 
 ### 4.) Changing the **background color** of the Georeferencer Map Canvas
 
-If we need to georeference images with a white background where the coordinates of the corner points are known but the corners not visible, we can use the “Change Background Color” button to change the background color of the Georeferencer Map Canvas.
+Sometimes helpful if we want to select the corners of an image with white background.
 
 ### 5.) Easy **removal of all GCPs**
 
