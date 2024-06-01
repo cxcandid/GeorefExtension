@@ -31,6 +31,7 @@ The extension consists of an additional Georeferencer toolbar with 3 buttons and
 
 ![GeorefExtension Toolbar](./images/toolbar.jpg)
 
+|         |         |
 | ------- | ------- |
 | ![Set Background Color](./icons/color.svg) | Set Background Color |
 | ![Delete all GCPs](./icons/delete.svg) | Delete all GCPs |
@@ -99,14 +100,15 @@ Delete all GCPs with the click of a button.
 
 ![GeorefExtension Dialog](./images/dialog.jpg)
 
+|         |         |
 | ------- | ------- |
-| **Output File** | ... *the Name and Path of the Output File is automatically choosen from the Source Image. If the directory is read-only the Temp Path is used instead. We can change the file name to create multiple versions.* |
-| **NoData Value** | ... *an Integer value to define a color as NoData (i.e. 255,0 or 1 for B/W images).* |
-| **Create Alpha Channel** | ... *we have to enable this switch if we want to create an Alpha band (esp. for cropping images).* |
-| **Load in QGIS when done** | ... *we have to enable this switch if we want to view the result in QGIS. If we repeat the georeferencing or cropping with the same image, we can disable the switch and track the changes to the existing image.* |
-| **Target SRS** | ... *CRS of the result image.* |
-| **Cutline SRS** | ... *CRS of the clipping boundary.* |
-| **Enter Cutline WKT** | ... *WKT string of the clipping boundary.* |
+| **Output File** | *the Name and Path of the Output File is automatically choosen from the Source Image. If the directory is read-only the Temp Path is used instead. We can change the file name to create multiple versions.* |
+| **NoData Value** | *an Integer value to define a color as NoData (i.e. 255,0 or 1 for B/W images).* |
+| **Create Alpha Channel** | *we have to enable this switch if we want to create an Alpha band (esp. for cropping images).* |
+| **Load in QGIS when done** | *we have to enable this switch if we want to view the result in QGIS. If we repeat the georeferencing or cropping with the same image, we can disable the switch and track the changes to the existing image.* |
+| **Target SRS** | *CRS of the result image.* |
+| **Cutline SRS** | *CRS of the clipping boundary.* |
+| **Enter Cutline WKT** | *WKT string of the clipping boundary.* |
 
 ## How to improve PDF image quality?
 
