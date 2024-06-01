@@ -1,7 +1,8 @@
 
 # QGIS GeorefExtension Plugin
 
-This is a QGIS Python plugin to extend the features of the QGIS Raster Georeferencer.
+This is an EXPERIMENTAL QGIS Python plugin to extend the features of the QGIS Raster Georeferencer.
+It's tested in QGIS >=3.26 Windows.
 
 ## Why do we need a Georeferencer Extension?
 
