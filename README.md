@@ -31,7 +31,6 @@ The extension consists of an additional Georeferencer toolbar with 3 buttons and
 
 ![GeorefExtension Toolbar](./images/toolbar.jpg)
 
-|         |         |
 | ------- | ------- |
 | ![Set Background Color](./icons/color.svg) | Set Background Color |
 | ![Delete all GCPs](./icons/delete.svg) | Delete all GCPs |
@@ -50,7 +49,7 @@ Most, if not all, Transformation Settings parameters are ignored by the Georefer
 
 ## What use cases are there?
 
-Here I come back to the list of the missing features I mentioned earlier.
+Now back to the list of missing features I mentioned earlier.
 
 ### 1.) Exporting to **Virtual raster file (VRT)** instead of GeoTIFF:
 
@@ -100,7 +99,6 @@ Delete all GCPs with the click of a button.
 
 ![GeorefExtension Dialog](./images/dialog.jpg)
 
-|         |         |
 | ------- | ------- |
 | **Output File** | ... *the Name and Path of the Output File is automatically choosen from the Source Image. If the directory is read-only the Temp Path is used instead. We can change the file name to create multiple versions.* |
 | **NoData Value** | ... *an Integer value to define a color as NoData (i.e. 255,0 or 1 for B/W images).* |
