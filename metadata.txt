@@ -12,8 +12,10 @@ email=christoph.candido@gmx.at
 
 about=Extension to the Raster Georeferencer Plugin
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://github.com/cxcandid/GeorefExtension/issues
+homepage=https://github.com/cxcandid/GeorefExtension
+repository=https://github.com/cxcandid/GeorefExtension
+
 # End of mandatory metadata
 
 # Recommended items:
@@ -25,13 +27,11 @@ changelog=3.0.4 : some code changes, because QGIS is adding statistics to VRT + 
 3.0.2 : refresh VRT automatically
 
 # Tags are comma separated with spaces allowed
-tags=python
+tags=georeferencing, raster, clip, vrt, gdal
 
-homepage=http://homepage
-category=Raster
-icon=./icons/go.png
+icon=./icons/go.svg
 # experimental flag
-experimental=False
+experimental=True
 
 # deprecated flag (applies to the whole plugin, not just a single version)
 deprecated=False
@@ -42,7 +42,7 @@ deprecated=False
 # plugin_dependencies=
 
 Category of the plugin: Raster, Vector, Database or Web
-# category=
+category=Raster
 
 # If the plugin can run on QGIS Server.
 server=False

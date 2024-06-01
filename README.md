@@ -1,7 +1,7 @@
 
 # QGIS GeorefExtension Plugin
 
-This is a QGIS 3.x Python plugin to extend the features of the QGIS Raster Georeferencer.
+This is a QGIS Python plugin to extend the features of the QGIS Raster Georeferencer.
 
 ## Why do we need a Georeferencer Extension?
 
@@ -10,15 +10,17 @@ The QGIS Georeferencer is a helpful tool to georeference all kinds of raster ima
 The following list shows the features I missed when I started using the QGIS Georeferencer more often.
 That's why I decided to extend it.
 
-1.) Export to **Virtual raster file (VRT)** instead of GeoTIFF.
+1.) Exporting to **Virtual raster file (VRT)** instead of GeoTIFF.
 
-2.) **Iterative improvement** of the georeferencing result by repeatedly changing/adjusting GCPs
+2.) **Iterative improvement** of the georeferencing result by repeatedly changing/adjusting GCPs and refreshing the result image
 
-3.) **Clipping the georeferenced image** with a QGIS polygon feature
+3.) **Clipping the georeferenced image** with a QGIS feature geometry
 
-4.) Changing the **background color** of the Georeferencer Map Canvas
+4.) **Retaining the clipping boundaries** for easier creation of image footprints
 
-5.) Easy **removal of all GCPs**
+5.) Changing the **background color** of the Georeferencer Map Canvas
+
+6.) Quick **removal of all GCPs**
 
 I will explain each list item later.
 
@@ -31,9 +33,9 @@ The extension consists of an additional Georeferencer toolbar with 3 buttons and
 
 |         |         |
 | ------- | ------- |
-| ![Set Background Color](./icons/color.png) | Set Background Color |
-| ![Delete all GCPs](./icons/delete.png) | Delete all GCPs |
-| ![Create Virtual Raster](./icons/go.png) | Create Virtual Raster |
+| ![Set Background Color](./icons/color.svg) | Set Background Color |
+| ![Delete all GCPs](./icons/delete.svg) | Delete all GCPs |
+| ![Create Virtual Raster](./icons/go.svg) | Create Virtual Raster |
 
 ![Georeferencer Dialog](./images/georeferencer.jpg)
 
@@ -50,30 +52,49 @@ Most, if not all, Transformation Settings parameters are ignored by the Georefer
 
 Here I come back to the list of the missing features I mentioned earlier.
 
-### 1.) Export to **Virtual raster file (VRT)** instead of GeoTIFF:
+### 1.) Exporting to **Virtual raster file (VRT)** instead of GeoTIFF:
 
 I always found it very impractical that the original images were duplicated and I had to accept a certain loss of quality in the result.
 In addition, QGIS locks the result file, so I cannot simply overwrite it. This brings me to item 2 of my list.
 
-### 2.) **Iterative improvement** of the georeferencing result by repeatedly changing/adjusting GCPs
+### 2.) **Iterative improvement** of the georeferencing result by repeatedly changing/adjusting GCPs and refreshing the result image
 
 Virtual raster files (VRT) can be overwritten at any time, making iterative georeferencing easy.
 By iterative georeferencing, I mean repeatedly adding and removing GCPs and refreshing the resulting image in QGIS. 
 This means that the image does not lose any blending mode settings that may have been set and retains the correct layer order.
 
-### 3.) **Clipping the georeferenced image** with a QGIS feature boundary
+### 3.) **Clipping the georeferenced image** with a QGIS feature geometry
 
 The georeferencing of images very often also requires cropping of the image content.
 To make this process as efficient as possible, I have created the option of specifying WKT strings as clipping boundaries.
 This allows us to select individual features using the QGIS `Copy Features` command and paste the WKT string into the "Enter Cutline WKT" edit field.
 
-### 4.) Changing the **background color** of the Georeferencer Map Canvas
+### 4.) **Retaining the clipping boundary** for easier creation of image footprints
 
-Sometimes helpful if we want to select the corners of an image with white background.
+To retain the clipping boundary (cutline), the Georeferencer Extension stores the WKT string inside the `Metadata` section of the VRT.
 
-### 5.) Easy **removal of all GCPs**
+```
+  <Metadata>
+    <MDI key="CUTLINE">POLYGON ((3335.11 341739.01,4186.13 340840.15,3518.00 340207.58,2666.98 341106.44,3335.11 341739.01))</MDI>
+    <MDI key="EXIF_ColorSpace">65535</MDI>
+    <MDI key="EXIF_DateTime">2007:09:03 14:43:32</MDI>
+    <MDI key="EXIF_Orientation">1</MDI>
+    <MDI key="EXIF_PixelXDimension">1280</MDI>
+    <MDI key="EXIF_PixelYDimension">1024</MDI>
+    <MDI key="EXIF_ResolutionUnit">2</MDI>
+    <MDI key="EXIF_Software">Adobe Photoshop 7.0</MDI>
+    <MDI key="EXIF_XResolution">(100)</MDI>
+    <MDI key="EXIF_YResolution">(100)</MDI>
+  </Metadata>
+```
 
-Not important, but sometimes helpful if we can delete all GCPs with the click of a button.
+### 5.) Changing the **background color** of the Georeferencer Map Canvas
+
+It's sometimes helpful to change the background color of the Map Canvas if we want to select the corners of an image with white background.
+
+### 6.) Easy **removal of all GCPs**
+
+Delete all GCPs with the click of a button.
 
 ## The Create Virtual Raster dialog
 
