@@ -6,13 +6,11 @@
 name=Georeferencer Extension
 qgisMinimumVersion=3.0
 description=Extension to the Raster Georeferencer Plugin
-version=3.0.4
+version=3.0.5
 author=Christoph Candido
 email=christoph.candido@gmx.at
 
-about=This is an EXPERIMENTAL extension to the QGIS 3.x Raster Georeferencer Plugin. 
-The main purpose of this extension is to save the georeferencing results in VRT files instead of GeoTIFF.
-See Description: https://github.com/cxcandid/GeorefExtension/blob/main/README.md
+about=This is an EXPERIMENTAL extension to the QGIS 3.x Raster Georeferencer Plugin. The main purpose of this extension is to save the georeferencing results in VRT files instead of GeoTIFF. See Description: https://github.com/cxcandid/GeorefExtension/blob/main/README.md
 
 tracker=https://github.com/cxcandid/GeorefExtension/issues
 homepage=https://github.com/cxcandid/GeorefExtension
@@ -24,7 +22,8 @@ repository=https://github.com/cxcandid/GeorefExtension
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=3.0.4 : some code changes, because QGIS is adding statistics to VRT + adding CUTLINE as metadata
+changelog=3.0.5 : added LICENSE
+3.0.4 : some code changes, because QGIS is adding statistics to VRT + adding CUTLINE as metadata
 3.0.3 : updated for QGIS 3.26.x
 3.0.2 : refresh VRT automatically
 
