@@ -2,7 +2,7 @@
 # QGIS GeorefExtension Plugin
 
 This is an EXPERIMENTAL QGIS Python plugin to extend the features of the QGIS Raster Georeferencer.
-It's tested in QGIS >=3.26 Windows.
+It's tested in QGIS >=3.24 Windows.
 
 ## Why do we need a Georeferencer Extension?
 
@@ -122,3 +122,6 @@ If we need to improve PDF image quality, we can change the resolution using the 
 We can use the Georeference Extension to crop already georeferenced images as well.
 We can drag & drop a GeoTIFF or GeoPDF into the Georeferencer Map Canvas and call `Create Virtual Raster` without specifying any GCP.
 
+## Credit
+
+Credit goes to *Enrico Ferreguti* (I used his method from `changeDataSource plugin` to update a VRT raster layer) and to *Even Rouault* (for his tireless willingness to help with GDAL, i.e. https://trac.osgeo.org/gdal/ticket/6648) 
