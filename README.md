@@ -1,7 +1,8 @@
 
 # QGIS GeorefExtension Plugin
 
-This is a QGIS Python plugin to extend the features of the QGIS Raster Georeferencer.
+This is an EXPERIMENTAL QGIS Python plugin to extend the features of the QGIS Raster Georeferencer.
+It's tested in QGIS >=3.24 Windows.
 
 ## Why do we need a Georeferencer Extension?
 
@@ -102,13 +103,13 @@ Delete all GCPs with the click of a button.
 
 |         |         |
 | ------- | ------- |
-| **Output File** | ... *the Name and Path of the Output File is automatically choosen from the Source Image. If the directory is read-only the Temp Path is used instead. We can change the file name to create multiple versions.* |
-| **NoData Value** | ... *an Integer value to define a color as NoData (i.e. 255,0 or 1 for B/W images).* |
-| **Create Alpha Channel** | ... *we have to enable this switch if we want to create an Alpha band (esp. for cropping images).* |
-| **Load in QGIS when done** | ... *we have to enable this switch if we want to view the result in QGIS. If we repeat the georeferencing or cropping with the same image, we can disable the switch and track the changes to the existing image.* |
-| **Target SRS** | ... *CRS of the result image.* |
-| **Cutline SRS** | ... *CRS of the clipping boundary.* |
-| **Enter Cutline WKT** | ... *WKT string of the clipping boundary.* |
+| **Output File** | *the Name and Path of the Output File is automatically choosen from the Source Image. If the directory is read-only the Temp Path is used instead. We can change the file name to create multiple versions.* |
+| **NoData Value** | *an Integer value to define a color as NoData (i.e. 255,0 or 1 for B/W images).* |
+| **Create Alpha Channel** | *we have to enable this switch if we want to create an Alpha band (esp. for cropping images).* |
+| **Load in QGIS when done** | *we have to enable this switch if we want to view the result in QGIS. If we repeat the georeferencing or cropping with the same image, we can disable the switch and track the changes to the existing image.* |
+| **Target SRS** | *CRS of the result image.* |
+| **Cutline SRS** | *CRS of the clipping boundary.* |
+| **Enter Cutline WKT** | *WKT string of the clipping boundary.* |
 
 ## How to improve PDF image quality?
 
@@ -121,3 +122,6 @@ If we need to improve PDF image quality, we can change the resolution using the 
 We can use the Georeference Extension to crop already georeferenced images as well.
 We can drag & drop a GeoTIFF or GeoPDF into the Georeferencer Map Canvas and call `Create Virtual Raster` without specifying any GCP.
 
+## Credit
+
+Credit goes to *Enrico Ferreguti* (I used his method from `changeDataSource plugin` to update a VRT raster layer) and to *Even Rouault* (for his tireless willingness to help with GDAL, i.e. https://trac.osgeo.org/gdal/ticket/6648) 
