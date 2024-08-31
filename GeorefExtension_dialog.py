@@ -51,7 +51,7 @@ class GeorefExtensionDialog(QDialog):
         self.lblFileName = QLabel('&Output File:')
         self.lblFileName.setBuddy(self.editFileName)
         self.editNodata = QLineEdit()
-        regex = QRegExp("[-]{0,1}\d+")
+        regex = QRegExp(r'[-]{0,1}\d+')
         #self.editNodata.setPlaceholderText('-9999')
         self.editNodata.setValidator(QRegExpValidator(regex))
         self.lblNodata = QLabel('&NoData Value:')

@@ -1,15 +1,15 @@
 
 # QGIS GeorefExtension Plugin
 
-This is an EXPERIMENTAL QGIS Python plugin to extend the features of the QGIS Raster Georeferencer.
+This is a QGIS Python plugin to extend the features of the QGIS Raster Georeferencer.
 It's tested in QGIS >=3.24 Windows.
 
 ## Why do we need a Georeferencer Extension?
 
 The QGIS Georeferencer is a helpful tool to georeference all kinds of raster images, but there are a few features missing that could improve the process of georeferencing.
 
-The following list shows the features I missed when I started using the QGIS Georeferencer more often.
-That's why I decided to extend it.
+The following list shows the features I missed when I started using the QGIS Georeferencer more often 
+(that's why I decided to extend it).
 
 1.) Exporting to **Virtual raster file (VRT)** instead of GeoTIFF.
 

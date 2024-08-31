@@ -28,7 +28,7 @@
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject, QAbstractItemModel
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QMainWindow, QGraphicsView, QDialogButtonBox, QWidget, QToolBar
+from qgis.PyQt.QtWidgets import QAction, QMainWindow, QGraphicsView, QDialogButtonBox, QWidget, QToolBar, QMessageBox
 from qgis.PyQt.QtXml import *
 
 from qgis.gui import QgsColorDialog, QgsMapCanvas, QgsMessageBar
@@ -40,6 +40,7 @@ from .GeorefExtension_dialog import GeorefExtensionDialog
 import os, gc, tempfile
 
 from osgeo import osr,gdal,ogr
+gdal.SetConfigOption('GDAL_CACHEMAX','1024')
 gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE','NO')
 gdal.SetConfigOption('GDAL_XML_VALIDATION','NO')
 gdal.SetConfigOption('VRT_VIRTUAL_OVERVIEWS','NO')
@@ -213,16 +214,16 @@ class GeorefExtension:
 
         src_ds = gdal.Open(fileName)
         if src_ds:
-            prj = src_ds.GetProjection()
-            srs = osr.SpatialReference(wkt=prj)
-            srs.AutoIdentifyEPSG()
-            #epsg = srs.GetAttrValue("AUTHORITY", 1)
-            epsg = srs.GetAuthorityCode(None)
-
-            if epsg:
+            try:
+                prj = src_ds.GetProjection()
+                srs = osr.SpatialReference(wkt=prj)
+                srs.AutoIdentifyEPSG()
+                #epsg = srs.GetAttrValue("AUTHORITY", 1)
+                epsg = srs.GetAuthorityCode(None)
                 self.dlg.lblMessage.setText("Input File is already projected (EPSG:%s)" % epsg)
-            else:
+            except:
                 self.dlg.lblMessage.setText("")
+                pass
 
             self.dlg.editWkt.setPlainText("")
             self.dlg.chkLoad.setChecked(True)
@@ -339,8 +340,9 @@ class GeorefExtension:
         
         sourceSRS = layer.crs().authid()
         if not sourceSRS:
-            messageBar = QgsMessageBar(self.canvas)
-            messageBar.pushMessage(text='Invalid Source SRS found!', level=Qgis.Warning, duration=20)
+            #messageBar = QgsMessageBar(self.canvas)
+            #messageBar.pushMessage(text='Invalid Source SRS found!', level=Qgis.Warning, duration=20)
+            QMessageBox.critical(None,"Georeferencer Extension",'Invalid Source SRS found!\nPlease set the correct Source projection in "Settings > Source Properties...".')
             return
 
         srsID = int(sourceSRS.split(":")[1])
@@ -381,8 +383,7 @@ class GeorefExtension:
             tgtID = int(targetSRS.split(':')[1])
             if targetSRS[0:4] == 'EPSG':
                 self.settings.setValue("Plugin-GeoReferencer/targetsrs", tgtID)
-            new_options = '-of VRT -s_srs '+sourceSRS+' -t_srs '+targetSRS+' '
-
+            new_options = '-co NUM_THREADS=ALL_CPUS -of VRT -s_srs '+sourceSRS+' -t_srs '+targetSRS+' '
             dst_ds = None
             if destFile:
                 noData = self.dlg.getNodata()
@@ -427,7 +428,7 @@ class GeorefExtension:
                     metadata['CUTLINE'] = newCutlineWkt
                     src_ds_temp.SetMetadata(metadata)
                     
-                    new_options += '-cutline /vsimem/temp.db -crop_to_cutline '
+                    new_options += '-co NUM_THREADS=ALL_CPUS -multi -wo NUM_THREADS=ALL_CPUS -wm 1024 -cutline /vsimem/temp.db -crop_to_cutline '
                     polygon = ogr.CreateGeometryFromWkt(cutlineWkt)
 
                     #create an output datasource in memory
@@ -481,6 +482,10 @@ class GeorefExtension:
                 del src_ds
         
         # Release memory associated to the in-memory file 
-        gdal.Unlink('/vsimem/temp') 
+        try:
+            gdal.Unlink('/vsimem/temp')
+        except:
+            pass
+
         gc.collect()
 
