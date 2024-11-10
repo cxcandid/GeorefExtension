@@ -23,7 +23,7 @@
  ***************************************************************************/
 """
 #import debugpy
-#debugpy.configure(python='C:/OSGeo4W/apps/Python39/python.exe')
+#debugpy.configure(python='C:/OSGeo4W/apps/Python312/python.exe')
 #debugpy.listen(('0.0.0.0',5678))
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject, QAbstractItemModel
@@ -37,14 +37,13 @@ from qgis.core import Qgis, QgsCoordinateReferenceSystem, QgsProject, QgsReadWri
 
 # Import the code for the dialog
 from .GeorefExtension_dialog import GeorefExtensionDialog
-import os, gc, tempfile
+import os, gc, tempfile, re
 
 from osgeo import osr,gdal,ogr
 gdal.SetConfigOption('GDAL_CACHEMAX','1024')
 gdal.SetConfigOption('GDALWARP_DENSIFY_CUTLINE','NO')
 gdal.SetConfigOption('GDAL_XML_VALIDATION','NO')
 gdal.SetConfigOption('VRT_VIRTUAL_OVERVIEWS','NO')
-gdal.DontUseExceptions()
 
 
 if os.getenv('GDAL_PDF_DPI'):
@@ -185,6 +184,9 @@ class GeorefExtension:
         except:
             pass
 
+    def atof(self,txt):
+        return float('%s.%s' % (re.sub(r'[^\d-]','',re.sub(r'(.+)[,.]\d+$',r'\1',txt)),re.search('(\d+)$',txt)[0]))
+        
     def getRasterParameters(self):
         canvas = self.iface.mainWindow().findChild(QgsMapCanvas,'georefCanvas')
         if len(canvas.layers()) == 0:
@@ -193,7 +195,7 @@ class GeorefExtension:
         layer = canvas.layers()[0]
 
         try:
-            layerSrsId = int(layer.crs().authid().split(':')[1])
+            layerSrsId = int(re.search(r'\d+',layer.crs().authid())[0])
             self.dlg.projSelectWkt.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(layerSrsId))
         except:
             pass
@@ -339,13 +341,19 @@ class GeorefExtension:
         srcFile = layer.source()
         
         sourceSRS = layer.crs().authid()
-        if not sourceSRS:
+        srsID = None
+        try:
+            srsID = int(re.search(r'\d+',sourceSRS)[0])
+        except:
+            pass
+            
+        if not sourceSRS or not srsID:
             #messageBar = QgsMessageBar(self.canvas)
             #messageBar.pushMessage(text='Invalid Source SRS found!', level=Qgis.Warning, duration=20)
             QMessageBox.critical(None,"Georeferencer Extension",'Invalid Source SRS found!\nPlease set the correct Source projection in "Settings > Source Properties...".')
             return
 
-        srsID = int(sourceSRS.split(":")[1])
+        
         tgtID = int(self.settings.value("Plugin-GeoReferencer/targetsrs", srsID))
         self.dlg.projSelect.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(tgtID))
         self.dlg.lblMessage.setText('Invalid Source SRS found!')
@@ -365,6 +373,42 @@ class GeorefExtension:
         self.chkDestinationFileName()
 
         if self.dlg.exec_():
+            if self.dlg.getWkt().strip() != "" and not self.dlg.projSelectWkt.crs().authid():
+                QMessageBox.critical(None,"Georeferencer Extension",'Invalid Cutline SRS!\nPlease select the correct SRS.')
+                self.transformAndSave()
+                return
+
+            targetSRS = self.dlg.projSelect.crs().authid()
+            tgtID = int(re.search(r'\d+',targetSRS)[0])
+            if targetSRS[0:4] == 'EPSG':
+                self.settings.setValue("Plugin-GeoReferencer/targetsrs", tgtID)
+
+            cutlineWkt = self.dlg.getWkt().strip()
+            if '\n' in cutlineWkt:
+                i = cutlineWkt.index('\n')+1
+                cutlineWkt = cutlineWkt[i:]
+
+            if cutlineWkt != '':
+                # convert cutline from cutlineSRS to targetSRS and save WKT as CUTLINE Metadata node
+                cutlineWktCrs = self.dlg.projSelectWkt.crs().authid()
+                cutlineWktCrsID = int(re.search(r'\d+',cutlineWktCrs)[0])
+                cutlineSRS = osr.SpatialReference()
+                cutlineSRS.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+                cutlineSRS.ImportFromEPSG(cutlineWktCrsID)
+                cutlineTargetSRS = osr.SpatialReference()
+                cutlineTargetSRS.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+                cutlineTargetSRS.ImportFromEPSG(tgtID)
+                transform = osr.CoordinateTransformation(cutlineSRS, cutlineTargetSRS)
+                try:
+                    poly = ogr.CreateGeometryFromWkt(cutlineWkt) # new Poly is in 3D
+                except:
+                    QMessageBox.critical(None,"Georeferencer Extension",'Invalid Cutline WKT string!\nOnly POLYGON and MULTIPOLYGON geometries are allowed.')
+                    self.transformAndSave()
+                    return
+                #poly.FlattenTo2D() # flatten to 2D
+                poly.Transform(transform)
+                newCutlineWkt = poly.ExportToWkt()
+                
             destFile = self.dlg.getFileName()
             openOptions = None
 
@@ -373,16 +417,7 @@ class GeorefExtension:
                 src_ds = gdal.OpenEx(srcFile, gdal.OF_RASTER | gdal.OF_UPDATE, open_options=openOptions)
             else:
                 src_ds = gdal.Open(srcFile,gdal.GA_ReadOnly)
-                       
-            cutlineWkt = self.dlg.getWkt().strip()
-            if '\n' in cutlineWkt:
-                i = cutlineWkt.index('\n')+1
-                cutlineWkt = cutlineWkt[i:]
 
-            targetSRS = self.dlg.projSelect.crs().authid()
-            tgtID = int(targetSRS.split(':')[1])
-            if targetSRS[0:4] == 'EPSG':
-                self.settings.setValue("Plugin-GeoReferencer/targetsrs", tgtID)
             new_options = '-co NUM_THREADS=ALL_CPUS -of VRT -s_srs '+sourceSRS+' -t_srs '+targetSRS+' '
             dst_ds = None
             if destFile:
@@ -396,8 +431,9 @@ class GeorefExtension:
                 widget = self.iface.mainWindow().findChild(QWidget,'dockWidgetGCPpoints')
                 model = widget.findChild(QAbstractItemModel)
                 gcpList = []
+
                 for i in range(model.rowCount()):
-                    gcp = gdal.GCP(float(model.index(i,4).data()),float(model.index(i,5).data()),0,float(model.index(i,2).data()),-(float(model.index(i,3).data())))
+                    gcp = gdal.GCP(self.atof(model.index(i,4).data()),self.atof(model.index(i,5).data()),0,self.atof(model.index(i,2).data()),-(self.atof(model.index(i,3).data())))
                     gcpList.append(gcp)
 
                 gdal.Translate(destName='/vsimem/temp', srcDS=src_ds,format = 'VRT', outputSRS = sourceSRS, GCPs = gcpList)
@@ -408,21 +444,6 @@ class GeorefExtension:
 
                 tempDs = None
                 if cutlineWkt != '':
-                    # convert cutline from cutlineSRS to targetSRS and save WKT as CUTLINE Metadata node
-                    cutlineWktCrs = self.dlg.projSelectWkt.crs().authid()
-                    cutlineWktCrsID = int(cutlineWktCrs.split(':')[1])
-                    cutlineSRS = osr.SpatialReference()
-                    cutlineSRS.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-                    cutlineSRS.ImportFromEPSG(cutlineWktCrsID)
-                    targetSRS = osr.SpatialReference()
-                    targetSRS.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-                    targetSRS.ImportFromEPSG(tgtID)
-                    transform = osr.CoordinateTransformation(cutlineSRS, targetSRS)
-                    poly = ogr.CreateGeometryFromWkt(cutlineWkt) # new Poly is in 3D
-                    #poly.FlattenTo2D() # flatten to 2D
-                    poly.Transform(transform)
-                    newCutlineWkt = poly.ExportToWkt()
-
                     # add CUTLINE to src_ds_temp
                     metadata = src_ds_temp.GetMetadata()
                     metadata['CUTLINE'] = newCutlineWkt
@@ -480,7 +501,7 @@ class GeorefExtension:
 
             if src_ds:
                 del src_ds
-        
+
         # Release memory associated to the in-memory file 
         try:
             gdal.Unlink('/vsimem/temp')

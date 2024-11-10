@@ -1,16 +1,14 @@
-# This file contains metadata for your plugin.
-
-# This file should be included when you package your plugin.# Mandatory items:
+# Mandatory items:
 
 [general]
 name=Georeferencer Extension
 qgisMinimumVersion=3.0
-description=Extension to the Raster Georeferencer Plugin
-version=3.0.6
+description=Extension to the QGIS 3.x Raster Georeferencer
+version=3.0.7
 author=Christoph Candido
-email=christoph.candido@gmx.at
+email=christoph.candido@chello.at
 
-about=This is an extension to the QGIS 3.x Raster Georeferencer Plugin. The main purpose of this extension is to save the georeferencing results in VRT files instead of GeoTIFF (See <a href="https://github.com/cxcandid/GeorefExtension/blob/main/README.md">Description</a>).
+about=This is an extension to the QGIS 3.x Raster Georeferencer. The main purpose of this extension is to save the georeferencing results in VRT files instead of GeoTIFF (See <a href="https://github.com/cxcandid/GeorefExtension/blob/main/README.md">Description</a>).
 
 tracker=https://github.com/cxcandid/GeorefExtension/issues
 homepage=https://github.com/cxcandid/GeorefExtension
@@ -22,7 +20,8 @@ repository=https://github.com/cxcandid/GeorefExtension
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=3.0.6 : added Warp options, removed experimental flag
+changelog=3.0.7 : minor changes to make it more fail-safe, fixed errors when running under Mac OS
+3.0.6 : added Warp options, removed experimental flag
 3.0.5 : added LICENSE
 3.0.4 : some code changes, because QGIS is adding statistics to VRT + adding CUTLINE as metadata
 3.0.3 : updated for QGIS 3.26.x

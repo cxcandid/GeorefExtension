@@ -2,7 +2,7 @@
 # QGIS GeorefExtension Plugin
 
 This is a QGIS Python plugin to extend the features of the QGIS Raster Georeferencer.
-It's tested in QGIS >=3.24 Windows.
+It has been tested in QGIS >=3.24 Windows.
 
 ## Why do we need a Georeferencer Extension?
 
@@ -44,14 +44,14 @@ The "Create Virtual Raster" dialog is only shown if a raster is loaded into the 
 
 ## How does the Georeferencer Extension work?
 
-The Georeferencer Extension uses GDAL's Python bindings (gdal.translate, gdal.warp) to re-project a raster image using the ground control points (GCPs) from the GCP table, crop the result if necessary and save to VRT.
+The Georeferencer Extension uses GDAL's Python bindings (gdal.translate, gdal.warp) to re-project a raster image using the ground control points (GCPs) from the GCP table, crop the result if necessary and save it to VRT.
 
-Since GDAL has no option to define a raster transformation typ, the QGIS Georeferencer transformation type setting (see Georeferencer > Settings > Transformation Settings... > Transformation Parameters) is ignored. GDAL selects the transformation type itself, depending on the number of GCPs.
+Since GDAL has no option to define a raster transformation type, the QGIS Georeferencer transformation type setting (see Georeferencer > Settings > Transformation Settings... > Transformation Parameters) is ignored. GDAL selects the transformation type itself, depending on the number of GCPs.
 Most, if not all, Transformation Settings parameters are ignored by the Georeferencer Extension, but you have to choose the right Source-CRS and Target-CRS before you start to pick GCPs.
 
 ## What use cases are there?
 
-Now back to the list of missing features I mentioned earlier.
+We now return to the list of missing features I have already mentioned.
 
 ### 1.) Exporting to **Virtual raster file (VRT)** instead of GeoTIFF:
 
@@ -62,7 +62,7 @@ In addition, QGIS locks the result file, so I cannot simply overwrite it. This b
 
 Virtual raster files (VRT) can be overwritten at any time, making iterative georeferencing easy.
 By iterative georeferencing, I mean repeatedly adding and removing GCPs and refreshing the resulting image in QGIS. 
-This means that the image does not lose any blending mode settings that may have been set and retains the correct layer order.
+This means that the image does not lose any settings for the blend mode and retains the correct layer order.
 
 ### 3.) **Clipping the georeferenced image** with a QGIS feature geometry
 
