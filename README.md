@@ -44,9 +44,9 @@ The "Create Virtual Raster" dialog is only shown if a raster is loaded into the 
 
 ## How does the Georeferencer Extension work?
 
-The Georeferencer Extension uses GDAL's Python bindings (gdal.translate, gdal.warp) to re-project a raster image using the ground control points (GCPs) from the GCP table, crop the result if necessary and save it to VRT.
+The Georeferencer Extension uses GDAL's Python bindings (gdal.translate, gdal.warp) to re-project a raster image using the ground control points (GCPs) from the GCP table. It crops the result if necessary and saves it to a VRT file.
 
-Since GDAL has no option to define a raster transformation type, the QGIS Georeferencer transformation type setting (see Georeferencer > Settings > Transformation Settings... > Transformation Parameters) is ignored. GDAL selects the transformation type itself, depending on the number of GCPs.
+Since GDAL has no option to define a raster transformation type, the QGIS Georeferencer transformation type setting (see <kbd>Georeferencer</kbd> > <kbd>Settings</kbd> > <kbd>Transformation Settings...</kbd> > <kbd>Transformation Parameters</kbd>) is ignored. GDAL selects the transformation type itself, depending on the number of GCPs.
 Most, if not all, Transformation Settings parameters are ignored by the Georeferencer Extension, but you have to choose the right Source-CRS and Target-CRS before you start to pick GCPs.
 
 ## What use cases are there?
@@ -121,6 +121,15 @@ If we need to improve PDF image quality, we can change the resolution using the 
 
 We can use the Georeference Extension to crop already georeferenced images as well.
 We can drag & drop a GeoTIFF or GeoPDF into the Georeferencer Map Canvas and call `Create Virtual Raster` without specifying any GCP.
+
+## Want to georeference a specific page from a multi-page PDF?
+It was not my original intention to support multi-page PDF files, but a happy coincidence that this is also possible.
+All we have to do is edit the layer source of the PDF file to load the desired page into the Georeferencer map canvas.
+
+<kbd>Settings</kbd> > <kbd>Source Properties...</kbd> > <kbd>Layer Source</kbd>
+
+![Georef_PDF_Page](https://github.com/user-attachments/assets/c2164679-74af-4cc3-b340-44ebfdebc061)
+
 
 ## Credit
 
