@@ -29,6 +29,7 @@ from qgis.PyQt.QtCore import QRegExp
 from qgis.PyQt.QtGui import *
 from qgis.PyQt.QtWidgets import *
 from qgis.gui import QgsProjectionSelectionWidget,QgsFileWidget
+from osgeo import ogr
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 #FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -44,10 +45,19 @@ class GeorefExtensionDialog(QDialog):
         # #widgets-and-dialogs-with-auto-connect
         #self.setupUi(self)
         self.setWindowTitle("Create Virtual Raster")
-        self.resize(500,300)
+        self.resize(500,350)
         layout = QVBoxLayout(self)
+        hlayout = QHBoxLayout()
         self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.editDataSource = QLineEdit()
+        self.editDataSource.setPlaceholderText('Press "Refresh" to reset the Datasource')
+        self.btnRefresh = QPushButton("Refresh")
+        self.lblDataSource = QLabel('&Datasource: <a href="https://github.com/cxcandid/GeorefExtension/blob/main/README.md#7-adding-and-using-gdal-pdf-open-options-for-the-georeferencing-process"><img style="vertical-align:bottom" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MiA2MiIgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiB2ZXJzaW9uPSIxLjEiPjxkZWZzPjxsaW5lYXJHcmFkaWVudCBpZD0iZmllbGRHcmFkaWVudCIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiIHgxPSI0Mi45ODYzIiB5MT0iNy4wMTI3MCIgeDI9IjIyLjAxNDQiIHkyPSI1MS45ODcxIj48c3RvcCBvZmZzZXQ9IjAuMCIgc3RvcC1jb2xvcj0iI0JDRDZGRSIgLz4gPHN0b3Agb2Zmc2V0PSIxLjAiIHN0b3AtY29sb3I9IiM2Nzg3RDMiIC8+IDwvbGluZWFyR3JhZGllbnQ+IDxsaW5lYXJHcmFkaWVudCBpZD0iZWRnZUdyYWRpZW50IiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjU1LjQ1NDEiIHkxPSI0Mi43NTI5IiB4Mj0iOS41NDcxMCIgeTI9IjE2LjI0ODUiPiA8c3RvcCBvZmZzZXQ9IjAuMCIgc3RvcC1jb2xvcj0iIzMwNTdBNyIgLz4gPHN0b3Agb2Zmc2V0PSIxLjAiIHN0b3AtY29sb3I9IiM1QTdBQzYiIC8+IDwvbGluZWFyR3JhZGllbnQ+IDxyYWRpYWxHcmFkaWVudCBpZD0ic2hhZG93R3JhZGllbnQiPiA8c3RvcCBvZmZzZXQ9IjAuMCIgc3RvcC1jb2xvcj0iI0MwQzBDMCIgLz4gPHN0b3Agb2Zmc2V0PSIwLjg4IiBzdG9wLWNvbG9yPSIjQzBDMEMwIiAvPiA8c3RvcCBvZmZzZXQ9IjEuMCIgc3RvcC1jb2xvcj0iI0MwQzBDMCIgc3RvcC1vcGFjaXR5PSIwLjAiIC8+IDwvcmFkaWFsR3JhZGllbnQ+IDwvZGVmcz4gPGNpcmNsZSBpZD0ic2hhZG93IiByPSIyNi41IiBjeD0iMzIuNSIgY3k9IjI5LjUiIGZpbGw9InVybCgjc2hhZG93R3JhZGllbnQpIiB0cmFuc2Zvcm09Im1hdHJpeCgxLjA2NDgsMC4wLDAuMCwxLjA2NDgyMiwtMi4xLDEuMDg2NCkiIC8+IDxjaXJjbGUgaWQ9ImZpZWxkIiByPSIyNS44IiBjeD0iMzEiIGN5PSIzMSIgZmlsbD0idXJsKCNmaWVsZEdyYWRpZW50KSIgc3Ryb2tlPSJ1cmwoI2VkZ2VHcmFkaWVudCkiIHN0cm9rZS13aWR0aD0iMiIgLz4gPGcgaWQ9ImluZm8iIGZpbGw9IndoaXRlIj4gPHBvbHlnb24gcG9pbnRzPSIyMywyNSAzNSwyNSAzNSw0NCAzOSw0NCAzOSw0OCAyMyw0OCAyMyw0NCAyNyw0NCAyNywyOCAyMywyOCAyMywyNSIgLz4gPGNpcmNsZSByPSI0IiBjeD0iMzEiIGN5PSIxNyIgLz4gPC9nPiA8L3N2Zz4="/></a>')
+        self.lblDataSource.setOpenExternalLinks(True)
+        self.lblDataSource.setBuddy(self.editDataSource)
         self.editFileName = QgsFileWidget(self)
+        self.editFileName.setStorageMode(3)
+        self.editFileName.lineEdit().setEnabled(False)
         self.lblFileName = QLabel('&Output File:')
         self.lblFileName.setBuddy(self.editFileName)
         self.editNodata = QLineEdit()
@@ -68,7 +78,11 @@ class GeorefExtensionDialog(QDialog):
         self.lblEditWkt = QLabel('Enter Cutline WKT:')
         self.lblEditWkt.setBuddy(self.editWkt)
         self.lblMessage = QLabel('')
-        self.lblMessage.setStyleSheet("color:red")
+        self.lblMessage.setStyleSheet("color:blue")
+        layout.addWidget(self.lblDataSource)
+        hlayout.addWidget(self.editDataSource)
+        hlayout.addWidget(self.btnRefresh)
+        layout.addLayout(hlayout)
         layout.addWidget(self.lblFileName)
         layout.addWidget(self.editFileName)
         layout.addWidget(self.lblNodata)
@@ -83,11 +97,11 @@ class GeorefExtensionDialog(QDialog):
         layout.addWidget(self.editWkt)
         layout.addWidget(self.lblMessage)
         layout.addWidget(self.buttonBox)
-        self.buttonBox.accepted.connect(self.accept)
+        self.buttonBox.accepted.connect(self.checkSRS)
         self.buttonBox.rejected.connect(self.reject)
 
     def getWkt(self):
-        return self.editWkt.toPlainText()
+        return self.editWkt.toPlainText().strip()
     
     def getNodata(self):
         return self.editNodata.text()
@@ -99,3 +113,28 @@ class GeorefExtensionDialog(QDialog):
         root = os.path.dirname(filePath)
         self.editFileName.setDefaultRoot(root)
         self.editFileName.setFilePath(filePath)
+        
+    def checkSRS(self):
+        targetSRS = self.projSelect.crs().authid()
+        if not targetSRS:
+            self.lblMessage.setText('Invalid Target SRS! Please select the correct SRS.')
+            return
+
+        cutlineWkt = self.getWkt()
+        if cutlineWkt != "":
+            if '\n' in cutlineWkt:
+                i = cutlineWkt.index('\n')+1
+                cutlineWkt = cutlineWkt[i:]
+            try:
+                poly = ogr.CreateGeometryFromWkt(cutlineWkt) # new Poly is in 3D
+            except:
+                self.lblMessage.setText('Invalid Cutline WKT string!')
+                return
+
+            wktSRS = self.projSelectWkt.crs().authid()
+            if not wktSRS:
+                self.lblMessage.setText('Invalid Cutline SRS! Please select the correct SRS.')
+                return
+        
+        self.accept()
+

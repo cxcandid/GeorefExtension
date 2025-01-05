@@ -28,16 +28,16 @@
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QObject, QAbstractItemModel
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction, QMainWindow, QGraphicsView, QDialogButtonBox, QWidget, QToolBar, QMessageBox
+from qgis.PyQt.QtWidgets import QAction, QMainWindow, QGraphicsView, QDialogButtonBox, QWidget, QToolBar, QMessageBox, QDialog
 from qgis.PyQt.QtXml import *
 
 from qgis.gui import QgsColorDialog, QgsMapCanvas, QgsMessageBar
-from qgis.core import Qgis, QgsCoordinateReferenceSystem, QgsProject, QgsReadWriteContext, QgsMapLayerType, QgsRasterLayer
+from qgis.core import Qgis, QgsCoordinateReferenceSystem, QgsProject, QgsReadWriteContext, QgsMapLayerType, QgsRasterLayer, QgsSettings 
 
 
 # Import the code for the dialog
 from .GeorefExtension_dialog import GeorefExtensionDialog
-import os, gc, tempfile, re
+import os, gc, tempfile, re, pathlib
 
 from osgeo import osr,gdal,ogr
 gdal.SetConfigOption('GDAL_CACHEMAX','1024')
@@ -86,7 +86,9 @@ class GeorefExtension:
         if action:
             action.triggered.connect(self.addButtons)
             self.dlg = GeorefExtensionDialog()
+            self.dlg.editDataSource.textEdited.connect(self.disableOkButton)
             self.dlg.editFileName.fileChanged.connect(self.chkDestinationFileName)
+            self.dlg.btnRefresh.clicked.connect(self.updateDataSource)
             self.settings = QSettings()
         else:
             self.iface.messageBar().pushMessage(text="Module 'Georeferencer Extension': The module cannot be installed - Please activate module 'Georeferencer GDAL' first!", level=Qgis.Warning, duration=20)
@@ -186,11 +188,50 @@ class GeorefExtension:
 
     def atof(self,txt):
         return float('%s.%s' % (re.sub(r'[^\d-]','',re.sub(r'(.+)[,.]\d+$',r'\1',txt)),re.search('(\d+)$',txt)[0]))
-        
-    def getRasterParameters(self):
+
+    def disableOkButton(self):
+        self.dlg.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
+
+    def updateDataSource(self):
         canvas = self.iface.mainWindow().findChild(QgsMapCanvas,'georefCanvas')
         if len(canvas.layers()) == 0:
             return
+
+        layer = canvas.layers()[0]
+        fname = self.getSrcFileWithOpenOptions(self.dlg.editDataSource.text())[0]
+        if not self.checkSourceFile(fname):
+            return
+        self.setDataSource(layer,'gdal',self.dlg.editDataSource.text(),None,canvas)
+        res = self.getRasterParameters(True)
+        if res:
+            self.updateDialog(layer)
+
+    def checkSourceFile(self,file):
+        if file:
+            fn = re.findall(r'^(PDF:\d+:)*([^|]+)',file,re.IGNORECASE)[0][1]
+            if not pathlib.Path(fn).is_file():
+                self.dlg.lblMessage.setText("Source File does not exist")
+                return ''
+            else:
+                return fn
+        else:
+            self.dlg.editDataSource.setText(self.canvas.layers()[0].source())
+            self.dlg.lblMessage.setText("")
+            self.dlg.buttonBox.button(QDialogButtonBox.Ok).setEnabled(True)
+            return ''
+    
+    def getSrcFileWithOpenOptions(self,src):
+        resDict = dict((k.upper(),v) for k,v in re.findall(r'[|]option[:]([^=]+)=([^|]+)',src,re.M|re.IGNORECASE))
+        if len(resDict) > 0:
+            fn = re.findall(r'^([^|]+)[|]option[:]',src,re.IGNORECASE)[0] 
+            return [fn,resDict]
+        else:
+            return [src]
+
+    def getRasterParameters(self,refresh=False):
+        canvas = self.iface.mainWindow().findChild(QgsMapCanvas,'georefCanvas')
+        if len(canvas.layers()) == 0:
+            return False
 
         layer = canvas.layers()[0]
 
@@ -199,13 +240,17 @@ class GeorefExtension:
             self.dlg.projSelectWkt.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(layerSrsId))
         except:
             pass
-        
-        fileName = layer.source()
+
+        self.dlg.editDataSource.setText(layer.source())
+        fileName = self.getSrcFileWithOpenOptions(layer.source())[0]
+        fn = self.checkSourceFile(fileName)
+        if not fn:
+            return False
     
-        filePath, file_extension = os.path.splitext(fileName)
+        filePath, file_extension = os.path.splitext(fn)
         destFile = filePath + '.vrt'
         destPath = os.path.dirname(destFile)
-        
+
         # if destPath is not writeable, set destFile to write into temp directory
         if (not os.access(destPath,os.W_OK)):
             destPath = tempfile.gettempdir()
@@ -214,7 +259,12 @@ class GeorefExtension:
 
         self.dlg.setFileName(destFile)
 
-        src_ds = gdal.Open(fileName)
+        try:
+            src_ds = gdal.Open(fileName)
+        except:
+            self.dlg.lblMessage.setText("Wrong Datasource definition.")
+            return False
+
         if src_ds:
             try:
                 prj = src_ds.GetProjection()
@@ -227,8 +277,9 @@ class GeorefExtension:
                 self.dlg.lblMessage.setText("")
                 pass
 
-            self.dlg.editWkt.setPlainText("")
-            self.dlg.chkLoad.setChecked(True)
+            if not refresh:
+                self.dlg.editWkt.setPlainText("")
+                self.dlg.chkLoad.setChecked(True)
 
             if src_ds.RasterCount == 1:
                 band = src_ds.GetRasterBand(1)
@@ -239,7 +290,7 @@ class GeorefExtension:
                         if entry == (255, 255, 255, 255):
                             self.dlg.editNodata.setText(str(i))
                             break
-
+        return True
 
     def setGeorefBackgroundColor(self):
         canvas = self.iface.mainWindow().findChild(QGraphicsView,'georefCanvas')
@@ -257,7 +308,7 @@ class GeorefExtension:
         for _ in range(model.rowCount()):
             gui.deleteDataPoint(0)
 
-    def setDataSource(self, layer, newProvider, newDatasource, extent=None):
+    def setDataSource(self, layer, newProvider, newDatasource, extent=None, canvas=None):
         '''
         Method to write the new datasource to a raster Layer
         (C) by Enrico Ferreguti (changeDataSource plugin)
@@ -282,16 +333,20 @@ class GeorefExtension:
         layer.readLayerXml(XMLMapLayer, context)
         layer.reload()
 
-        self.iface.actionDraw().trigger()
-        self.iface.mapCanvas().refresh()
-        self.iface.layerTreeView().refreshLayerSymbology(layer.id())
+        if not canvas:
+            #self.iface.actionDraw().trigger()
+            self.iface.mapCanvas().refresh()
+            self.iface.layerTreeView().refreshLayerSymbology(layer.id())
+        else:
+            extent = layer.extent()
+            canvas.setExtent(extent)
+            canvas.refreshAllLayers()
+            #canvas.refresh()
 
-    def refreshLayer(self, destFile, srcFile, hasAlpha):
+    def refreshLayer(self, destFile, hasAlpha):
         canvas = self.iface.mapCanvas()
-        for layer in QgsProject.instance().mapLayers().values():
-            if layer.type() == QgsMapLayerType.RasterLayer and (layer.publicSource().lower() == destFile.lower() or (layer.providerType() == 'gdal' and srcFile.lower() in layer.publicSource().lower())):
-                #with open(destFile, 'r') as file:
-                #    data = file.read().replace('\n', '')
+        for layer in (lay for i,lay in QgsProject.instance().mapLayers().items() if lay.type() == QgsMapLayerType.RasterLayer):
+            if pathlib.Path(layer.publicSource()).resolve() == pathlib.Path(destFile).resolve():
                 
                 # create temporary layer to force QGIS adding statistics to VRT file, else we will eventually loose a possible cutline
                 tempLayer =  QgsRasterLayer(destFile,"temp", 'gdal')
@@ -300,8 +355,6 @@ class GeorefExtension:
                 # refresh datasource
                 layerId = layer.id()
                 self.setDataSource(layer,'gdal',tempLayer.source(),tempLayer.extent())
-                #newLayer = QgsProject.instance().mapLayer(layerId)
-                #print(newLayer.bandCount())
 
                 rend = layer.renderer()
                 if hasAlpha:
@@ -316,74 +369,72 @@ class GeorefExtension:
         if not(hasattr(self,'canvas')):
             return
         
-        layer = self.canvas.layers()[0]
-        srcFile = layer.source().lower().replace('\\','/')
         destFile = self.dlg.getFileName().lower().replace('\\','/')
+        if not(os.access(os.path.dirname(destFile), os.W_OK)):
+            self.dlg.lblMessage.setText('Invalid Output file!')
+            self.dlg.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
+            return
+
+
+        layer = self.canvas.layers()[0]
+        srcFile = self.checkSourceFile(self.getSrcFileWithOpenOptions(layer.source())[0].lower().replace('\\','/'))
         if srcFile == destFile:
             self.dlg.lblMessage.setText('Output file must not match Source file!')
             self.dlg.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
         else:
-            self.dlg.lblMessage.setText('')
             self.dlg.buttonBox.button(QDialogButtonBox.Ok).setEnabled(True)
 
-
-    def transformAndSave(self):
-        #debugpy.log_to('C:/OSGeo4W/logs')
-        #debugpy.wait_for_client()  # blocks execution until client is attached
-        #debugpy.breakpoint()
-        self.canvas = self.iface.mainWindow().findChild(QGraphicsView,'georefCanvas')
-        if not(hasattr(self,'canvas')) or len(self.canvas.layers()) == 0:
-            return
-
-        dpi = None
+    def updateDialog(self,layer):
+        src = self.getSrcFileWithOpenOptions(layer.source())
+        srcFile = self.checkSourceFile(src[0])
+        openParams = None
+        if len(src) > 1:
+            openParams = src[1]
         
-        layer = self.canvas.layers()[0]
-        srcFile = layer.source()
         
         sourceSRS = layer.crs().authid()
         srsID = None
         try:
             srsID = int(re.search(r'\d+',sourceSRS)[0])
+            self.dlg.projSourceSelect.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(srsID))
         except:
             pass
             
-        if not sourceSRS or not srsID:
-            #messageBar = QgsMessageBar(self.canvas)
-            #messageBar.pushMessage(text='Invalid Source SRS found!', level=Qgis.Warning, duration=20)
-            QMessageBox.critical(None,"Georeferencer Extension",'Invalid Source SRS found!\nPlease set the correct Source projection in "Settings > Source Properties...".')
-            return
-
-        
-        tgtID = int(self.settings.value("Plugin-GeoReferencer/targetsrs", srsID))
-        self.dlg.projSelect.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(tgtID))
-        self.dlg.lblMessage.setText('Invalid Source SRS found!')
-        self.dlg.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
-
-        if sourceSRS and sourceSRS[0:4] != 'USER':
-            self.dlg.lblMessage.setText('Source SRS: %s' % sourceSRS)
-            self.dlg.buttonBox.button(QDialogButtonBox.Ok).setEnabled(True)
-
-        
-        fname,ext = os.path.splitext(srcFile)
-
-        if ext.lower() == '.pdf':
-            dpi = gdal.GetConfigOption('GDAL_PDF_DPI',None)
+        if self.settings.value("Plugin-GeoReferencer/targetsrs"):
+            tgtID = int(self.settings.value("Plugin-GeoReferencer/targetsrs"))
+            self.dlg.projSelect.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(tgtID))
 
         self.dlg.editWkt.setFocus()
         self.chkDestinationFileName()
+        
+        return src[0],openParams
+
+    def transformAndSave(self):
+        #debugpy.log_to('C:/OSGeo4W/logs')
+        #debugpy.wait_for_client()  # blocks execution until client is attached
+        #debugpy.breakpoint()
+        self.dlg.lblMessage.setText('')
+        self.canvas = self.iface.mainWindow().findChild(QGraphicsView,'georefCanvas')
+        if not(hasattr(self,'canvas')) or len(self.canvas.layers()) == 0:
+            return
+        
+        layer = self.canvas.layers()[0]
+        self.dlg.editDataSource.setText(layer.source())
+
+        self.updateDialog(layer)
 
         if self.dlg.exec_():
-            if self.dlg.getWkt().strip() != "" and not self.dlg.projSelectWkt.crs().authid():
-                QMessageBox.critical(None,"Georeferencer Extension",'Invalid Cutline SRS!\nPlease select the correct SRS.')
-                self.transformAndSave()
+            srcFile,openParams = self.updateDialog(layer)
+
+            if not srcFile:
                 return
 
             targetSRS = self.dlg.projSelect.crs().authid()
             tgtID = int(re.search(r'\d+',targetSRS)[0])
-            if targetSRS[0:4] == 'EPSG':
-                self.settings.setValue("Plugin-GeoReferencer/targetsrs", tgtID)
+            #if targetSRS[0:4] == 'EPSG':
+            #    self.settings.setValue("/Plugin-GeoReferencer/targetsrs", tgtID)
 
-            cutlineWkt = self.dlg.getWkt().strip()
+            cutlineWkt = self.dlg.getWkt()
             if '\n' in cutlineWkt:
                 i = cutlineWkt.index('\n')+1
                 cutlineWkt = cutlineWkt[i:]
@@ -402,8 +453,8 @@ class GeorefExtension:
                 try:
                     poly = ogr.CreateGeometryFromWkt(cutlineWkt) # new Poly is in 3D
                 except:
-                    QMessageBox.critical(None,"Georeferencer Extension",'Invalid Cutline WKT string!\nOnly POLYGON and MULTIPOLYGON geometries are allowed.')
-                    self.transformAndSave()
+                    msg = 'Invalid Cutline WKT string!'
+                    self.transformAndSave(msg)
                     return
                 #poly.FlattenTo2D() # flatten to 2D
                 poly.Transform(transform)
@@ -412,13 +463,26 @@ class GeorefExtension:
             destFile = self.dlg.getFileName()
             openOptions = None
 
-            if dpi:
-                openOptions = ['DPI=%s' % dpi]
-                src_ds = gdal.OpenEx(srcFile, gdal.OF_RASTER | gdal.OF_UPDATE, open_options=openOptions)
-            else:
-                src_ds = gdal.Open(srcFile,gdal.GA_ReadOnly)
+            cont = True
 
-            new_options = '-co NUM_THREADS=ALL_CPUS -of VRT -s_srs '+sourceSRS+' -t_srs '+targetSRS+' '
+            if openParams:
+                openOptions = ['%s=%s' % (key,value) for (key,value) in openParams.items()]
+                  
+                try:
+                    src_ds = gdal.OpenEx(srcFile, gdal.OF_RASTER | gdal.OF_UPDATE, open_options=openOptions)
+                except:
+                    cont = False
+            else:
+                try:
+                    src_ds = gdal.Open(srcFile,gdal.GA_ReadOnly)
+                except:
+                    cont = False
+
+            if not cont:
+                QMessageBox.critical(None,"Georeferencer Extension",'Error in Datasource definition.')
+                return
+
+            new_options = '-co NUM_THREADS=ALL_CPUS -of VRT -t_srs '+targetSRS+' '
             dst_ds = None
             if destFile:
                 noData = self.dlg.getNodata()
@@ -436,7 +500,7 @@ class GeorefExtension:
                     gcp = gdal.GCP(self.atof(model.index(i,4).data()),self.atof(model.index(i,5).data()),0,self.atof(model.index(i,2).data()),-(self.atof(model.index(i,3).data())))
                     gcpList.append(gcp)
 
-                gdal.Translate(destName='/vsimem/temp', srcDS=src_ds,format = 'VRT', outputSRS = sourceSRS, GCPs = gcpList)
+                gdal.Translate(destName='/vsimem/temp', srcDS=src_ds,format = 'VRT', outputSRS = targetSRS, GCPs = gcpList)
                 if openOptions:
                    src_ds_temp = gdal.OpenEx('/vsimem/temp', open_options=openOptions)
                 else:
@@ -485,11 +549,7 @@ class GeorefExtension:
                 destFile = srcFile
 
             if self.dlg.chkLoad.isChecked():
-                #baseName = fileInfo.baseName()
                 baseName = os.path.basename(destFile)
-                #with open(destFile, 'r') as file:
-                #    data = file.read().replace('\n', '')
-
                 rasterLayer = self.iface.addRasterLayer(destFile,baseName)
                 extent = rasterLayer.extent()
                 # call layer.reload() to force QGIS adding statistics to VRT file
@@ -497,8 +557,7 @@ class GeorefExtension:
                 self.iface.mapCanvas().setExtent(extent)
             else:
                 # refresh all dependent raster layers
-                self.refreshLayer(destFile,srcFile,self.dlg.chkAlpha.isChecked())
-
+                self.refreshLayer(destFile,self.dlg.chkAlpha.isChecked())
             if src_ds:
                 del src_ds
 
