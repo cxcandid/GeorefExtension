@@ -72,7 +72,7 @@ We have to deactivate the switch `Load in QGIS when done` if we want to update a
 The georeferencing of images very often also requires cropping of the image content.
 To make this process as efficient as possible, I have created the option of specifying WKT strings as clipping boundaries.
 This allows us to select individual features using the QGIS `Copy Features` command and paste the WKT string into the "Enter Cutline WKT" edit field.
-We have to make sure that we copy the features as `Plain Text, WKT Geometry` (see <kbd>Settings<Kbd> > <kbd>Options...</kbd> > <kbd>Data Sources</kbd> > <kbd>Feature Attributes and Table</kbd> > <kbd>Copy features as</kbd>).
+We have to make sure that we copy the features as `Plain Text, WKT Geometry` (see <kbd>Settings</kbd> > <kbd>Options...</kbd> > <kbd>Data Sources</kbd> > <kbd>Feature Attributes and Table</kbd> > <kbd>Copy features as</kbd>).
 
 ### 4.) **Retaining the clipping boundary** for easier creation of image footprints
 
@@ -103,9 +103,16 @@ Delete all GCPs with the click of a button.
 
 ### 7.) Adding and using **GDAL PDF Open Options** for the georeferencing process
 
-We can use the Datasource edit field to add options for i.e. opening a specific page of a multipage PDF or for setting the PDF resolution.
+We can use the Datasource edit field to add options for i.e. setting the PDF resolution and/or turn ON/OFF specific layers. See all PDF Open Options here: https://gdal.org/en/stable/drivers/raster/pdf.html#open-options
+
 
 ![Datasource Open Options](./images/dsopenoptions.jpg)
+
+We can use `GDALINFO` to show all available layers in the Python Console.
+
+```
+!gdalinfo "d:/data/test.pdf" -mdd layers
+```
 
 ## The Create Virtual Raster dialog
 
@@ -130,7 +137,7 @@ If we need to improve PDF image quality, we can change the resolution globally u
 
 Or we can add a `GDAL PDF Open Option` to the Datasource string to overwrite the default PDF DPI setting.
 
-`d:/myfile.pdf|option:DPI=250` see all PDF Open Options here: https://gdal.org/en/stable/drivers/raster/pdf.html#open-options
+`d:/myfile.pdf|option:DPI=250`
 
 ## Want to crop an already georeferenced Image?
 
@@ -139,9 +146,9 @@ We can drag & drop a GeoTIFF or GeoPDF into the Georeferencer Map Canvas and cal
 
 ## Want to georeference a specific page from a multi-page PDF?
 It was not my original intention to support multi-page PDF files, but a happy coincidence that this is also possible.
-All we have to do is edit the Datasource of the PDF file and press `Refresh` to load the desired page into the Georeferencer Map Canvas.
+All we have to do is prepend `PDF:<pagenumber>:` to the Datasource of the PDF file and press `Refresh` to load the desired page into the Georeferencer Map Canvas.
 
-![Datasource Open Options](./images/dsopenoptions.jpg)
+![Datasource Open Options](./images/multipagepdf.jpg)
 
 
 ## Credit
