@@ -133,7 +133,7 @@ We can use `GDALINFO` to show all available layers in the Python Console.
 
 If we need to improve PDF image quality, we can change the resolution globally using the GDAL System Environment variable `GDAL_PDF_DPI`:
 
-`set GDAL_PDF_DPI=300` (Windows). The default value is 250.
+`set GDAL_PDF_DPI=300` (Windows). The default value is 150.
 
 Or we can add a `GDAL PDF Open Option` to the Datasource string to overwrite the default PDF DPI setting.
 
