@@ -111,7 +111,7 @@ We can use the Datasource edit field to add options for i.e. setting the PDF res
 We can use `GDALINFO` to show all available layers in the Python Console.
 
 ```
-!gdalinfo "d:/data/test.pdf" -mdd layers
+!gdalinfo "d:/data/multipage.pdf" -mdd layers
 ```
 
 ## The Create Virtual Raster dialog
