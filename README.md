@@ -145,7 +145,7 @@ We can use the Georeferencer Extension to crop already georeferenced images as w
 We can drag & drop a GeoTIFF or GeoPDF into the Georeferencer Map Canvas and call `Create Virtual Raster` without specifying any GCP.
 
 ## Want to crop an WMS/WMTS/TMS Service?
-We can crop WMS/WMTS/TMS services as well if we load the service via a GDAL WMS description file (i.e. osm.xml).
+We can even crop WMS/WMTS/TMS services if we load the service via a GDAL WMS description file (i.e. osm.xml).
 We can set the required tile level with `<TileLevel>xx</TileLevel>`.
 
 ```
