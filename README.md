@@ -144,6 +144,36 @@ Or we can add a `GDAL PDF Open Option` to the Datasource string to overwrite the
 We can use the Georeferencer Extension to crop already georeferenced images as well.
 We can drag & drop a GeoTIFF or GeoPDF into the Georeferencer Map Canvas and call `Create Virtual Raster` without specifying any GCP.
 
+## Want to crop an WMS/WMTS/TMS Service?
+We can crop WMS/WMTS/TMS services as well if we load the service via a GDAL WMS description file (i.e. osm.xml).
+We can set the required tile level with `<TileLevel>xx</TileLevel>`.
+
+```
+<GDAL_WMS>
+    <Service name='TMS'>
+      <ServerUrl>https://tile.openstreetmap.org/${z}/${x}/${y}.png</ServerUrl>
+    </Service>
+    <Transparent>FALSE</Transparent>
+    <DataWindow>
+      <UpperLeftX>-20037508.34</UpperLeftX>
+      <UpperLeftY>20037508.34</UpperLeftY>
+      <LowerRightX>20037508.34</LowerRightX>
+      <LowerRightY>-20037508.34</LowerRightY>
+      <TileLevel>12</TileLevel>
+      <TileCountX>1</TileCountX>
+      <TileCountY>1</TileCountY>
+      <YOrigin>top</YOrigin>
+    </DataWindow>
+    <Projection>EPSG:3857</Projection>
+    <BlockSizeX>256</BlockSizeX>
+    <BlockSizeY>256</BlockSizeY>
+    <BandsCount>3</BandsCount>
+    <UnsafeSSL>true</UnsafeSSL>
+    <MaxConnections>5</MaxConnections>
+    <Cache />
+</GDAL_WMS>
+```
+
 ## Want to georeference a specific page from a multi-page PDF?
 It was not my original intention to support multi-page PDF files, but a happy coincidence that this is also possible.
 All we have to do is prepend `PDF:<pagenumber>:` to the Datasource of the PDF file and press `Refresh` to load the desired page into the Georeferencer Map Canvas.
