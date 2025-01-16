@@ -131,11 +131,13 @@ We can use `GDALINFO` to show all available layers in the Python Console.
 
 ## How to improve PDF image quality?
 
-If we need to improve PDF image quality, we can change the resolution globally using the GDAL System Environment variable `GDAL_PDF_DPI`:
+If we need to improve PDF image quality, we can change the resolution globally using the GDAL System Environment variable `GDAL_PDF_DPI`.
+Changing the value always requires a restart of QGIS.
 
-`set GDAL_PDF_DPI=300` (Windows). The default value is 150.
+<kbd>Settings</kbd> > <kbd>Options...</kbd> > <kbd>System</kbd> > <kbd>Environment</kbd>: Variable = GDAL_PDF_DPI, Value = i.e. 300
 
-Or we can add a `GDAL PDF Open Option` to the Datasource string to overwrite the default PDF DPI setting.
+Or we can add a `GDAL PDF Open Option` to the Datasource string to overwrite the default PDF DPI setting and press <kbd>Refresh</kbd> afterwards.
+The advantage here is that we can easily try out different DPI settings and reload the image at the touch of a single button without having to restart QGIS.
 
 `d:/myfile.pdf|option:DPI=250`
 
