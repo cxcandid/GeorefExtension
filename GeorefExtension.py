@@ -87,7 +87,7 @@ class GeorefExtension:
             self.dlg.btnRefresh.clicked.connect(self.updateDataSource)
             self.settings = QSettings()
         else:
-            self.iface.messageBar().pushMessage(text="Module 'Georeferencer Extension': The module cannot be installed - Please activate module 'Georeferencer GDAL' first!", level=Qgis.Warning, duration=20)
+            self.iface.messageBar().pushMessage(text="Module 'Georeferencer Extension': The module cannot be installed - Please activate module 'Georeferencer GDAL' first!", level=Qgis.MessageLevel.Warning, duration=20)
 
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
@@ -180,10 +180,10 @@ class GeorefExtension:
             pass
 
     def atof(self,txt):
-        return float('%s.%s' % (re.sub(r'[^\d-]','',re.sub(r'(.+)[,.]\d+$',r'\1',txt)),re.search('(\d+)$',txt)[0]))
+        return float('%s.%s' % (re.sub(r'[^\d-]','',re.sub(r'(.+)[,.]\d+$',r'\1',txt)),re.search(r'(\d+)$',txt)[0]))
 
     def disableOkButton(self):
-        self.dlg.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
+        self.dlg.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
 
     def updateDataSource(self):
         canvas = self.iface.mainWindow().findChild(QgsMapCanvas,'georefCanvas')
@@ -210,7 +210,7 @@ class GeorefExtension:
         else:
             self.dlg.editDataSource.setText(self.canvas.layers()[0].source())
             self.dlg.lblMessage.setText("")
-            self.dlg.buttonBox.button(QDialogButtonBox.Ok).setEnabled(True)
+            self.dlg.buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(True)
             return ''
     
     def getSrcFileWithOpenOptions(self,src):
