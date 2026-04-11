@@ -2,14 +2,14 @@
 
 [general]
 name=Georeferencer Extension
+description=Extension to the QGIS 3.x/4.x Georeferencer
+version=4.0.0
 qgisMinimumVersion=3.0
-supportsQt6=True
-description=Extension to the QGIS 3.x Raster Georeferencer
-version=3.0.9
+qgisMaximumVersion=4.99
 author=Christoph Candido
-email=christoph.candido@gmx.at
+email=christoph.candido@chello.at
 
-about=This is an extension to the QGIS 3.x Raster Georeferencer. The main purpose of this extension is to save the georeferencing results in VRT files instead of GeoTIFF (See <a href="https://github.com/cxcandid/GeorefExtension/blob/main/README.md">Description</a>).
+about=This is an extension to the QGIS 3.x/4.x Georeferencer. The main purpose of this extension is to save the georeferencing results in VRT files instead of GeoTIFF (See <a href="https://github.com/cxcandid/GeorefExtension/blob/main/README.md">Description</a>).
 
 tracker=https://github.com/cxcandid/GeorefExtension/issues
 homepage=https://github.com/cxcandid/GeorefExtension
@@ -21,7 +21,8 @@ repository=https://github.com/cxcandid/GeorefExtension
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=3.0.9 : added Qt6 support, fixed a bug that occurs when a previous VRT with some blending mode is not replaced (VRT is set to read-only to prevent changes by QGIS).
+changelog=4.0.0 : QGIS 4.0 support tested and enabled
+3.0.9 : added Qt6 support, fixed a bug that occurs when an existing VRT with “Multiply” blending mode is not replaced
 3.0.8 : added support for GDAL Open Options (i.e. PDF:2:d:/test.pdf|option:dpi=250), dialog box extension for editing the raster data source, multiple code fixes to prevent errors
 3.0.7 : minor changes to make it more fail-safe, fixed errors when running under Mac OS
 3.0.6 : added Warp options, removed experimental flag
