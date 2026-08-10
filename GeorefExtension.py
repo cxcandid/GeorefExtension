@@ -211,7 +211,7 @@ class GeorefExtension:
         # remove toolbar actions
         try:
             self.gui.removeToolBar(self.extToolBar)
-        except:
+        except (AttributeError, RuntimeError):
             pass
         
         # cleanup crosshair items
@@ -221,7 +221,7 @@ class GeorefExtension:
                 if canvas:
                     canvas.xyCoordinates.disconnect(self.update_crosshair_position)
                     canvas.scene().removeItem(self.crosshair_item)
-            except:
+            except (AttributeError, RuntimeError, TypeError):
                 pass
             self.crosshair_item = None
 
@@ -286,7 +286,7 @@ class GeorefExtension:
         try:
             layerSrsId = int(re.search(r'\d+',layer.crs().authid())[0])
             self.dlg.projSelectWkt.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(layerSrsId))
-        except:
+        except (AttributeError, TypeError, ValueError, IndexError):
             pass
 
         self.dlg.editDataSource.setText(layer.source())
@@ -309,7 +309,7 @@ class GeorefExtension:
 
         try:
             src_ds = gdal.Open(fileName)
-        except:
+        except (RuntimeError, Exception):
             self.dlg.lblMessage.setText("Wrong Datasource definition.")
             return False
 
@@ -321,9 +321,8 @@ class GeorefExtension:
                 #epsg = srs.GetAttrValue("AUTHORITY", 1)
                 epsg = srs.GetAuthorityCode(None)
                 self.dlg.lblMessage.setText("Input File is already projected (EPSG:%s)" % epsg)
-            except:
+            except (RuntimeError, AttributeError, TypeError):
                 self.dlg.lblMessage.setText("")
-                pass
 
             if not refresh:
                 self.dlg.editWkt.setPlainText("")
@@ -447,7 +446,7 @@ class GeorefExtension:
         try:
             srsID = int(re.search(r'\d+',sourceSRS)[0])
             self.dlg.projSourceSelect.setCrs(QgsCoordinateReferenceSystem.fromEpsgId(srsID))
-        except:
+        except (AttributeError, TypeError, ValueError, IndexError):
             pass
             
         if self.settings.value("Plugin-GeoReferencer/targetsrs"):
@@ -502,7 +501,7 @@ class GeorefExtension:
                 transform = osr.CoordinateTransformation(cutlineSRS, cutlineTargetSRS)
                 try:
                     poly = ogr.CreateGeometryFromWkt(cutlineWkt) # new Poly is in 3D
-                except:
+                except (RuntimeError, Exception):
                     msg = 'Invalid Cutline WKT string!'
                     self.transformAndSave(msg)
                     return
@@ -520,12 +519,12 @@ class GeorefExtension:
                   
                 try:
                     src_ds = gdal.OpenEx(srcFile, gdal.OF_RASTER | gdal.OF_UPDATE, open_options=openOptions)
-                except:
+                except (RuntimeError, Exception):
                     cont = False
             else:
                 try:
                     src_ds = gdal.Open(srcFile,gdal.GA_ReadOnly)
-                except:
+                except (RuntimeError, Exception):
                     cont = False
 
             if not cont:
@@ -621,7 +620,7 @@ class GeorefExtension:
         # Release memory associated to the in-memory file 
         try:
             gdal.Unlink('/vsimem/temp')
-        except:
+        except (RuntimeError, Exception):
             pass
 
         gc.collect()
