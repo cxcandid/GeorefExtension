@@ -28,7 +28,7 @@ from stat import S_IREAD, S_IRGRP, S_IROTH, S_IWUSR
 from qgis.PyQt.QtCore import (QSettings, QTranslator, QCoreApplication, QObject, QAbstractItemModel, Qt, QRectF)
 from qgis.PyQt.QtGui import QIcon, QColor, QPen
 from qgis.PyQt.QtWidgets import (QAction, QMainWindow, QGraphicsView, QDialogButtonBox, QWidget, QToolBar, QMessageBox, QDialog)
-from qgis.PyQt.QtXml import *
+from qgis.PyQt.QtXml import QDomDocument
 from qgis.gui import (QgsColorDialog, QgsMapCanvas, QgsMessageBar, QgsMapCanvasItem)
 from qgis.core import(Qgis, QgsCoordinateReferenceSystem, QgsProject, QgsReadWriteContext, QgsMapLayerType, QgsRasterLayer, QgsSettings, QgsPointXY) 
 
