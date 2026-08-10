@@ -25,12 +25,12 @@
 import os, gc, tempfile, re, pathlib
 from stat import S_IREAD, S_IRGRP, S_IROTH, S_IWUSR
 
-from qgis.PyQt.QtCore import (QSettings, QTranslator, QCoreApplication, QObject, QAbstractItemModel)
-from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtCore import (QSettings, QTranslator, QCoreApplication, QObject, QAbstractItemModel, Qt, QRectF)
+from qgis.PyQt.QtGui import QIcon, QColor, QPen
 from qgis.PyQt.QtWidgets import (QAction, QMainWindow, QGraphicsView, QDialogButtonBox, QWidget, QToolBar, QMessageBox, QDialog)
 from qgis.PyQt.QtXml import *
-from qgis.gui import (QgsColorDialog, QgsMapCanvas, QgsMessageBar)
-from qgis.core import(Qgis, QgsCoordinateReferenceSystem, QgsProject, QgsReadWriteContext, QgsMapLayerType, QgsRasterLayer, QgsSettings) 
+from qgis.gui import (QgsColorDialog, QgsMapCanvas, QgsMessageBar, QgsMapCanvasItem)
+from qgis.core import(Qgis, QgsCoordinateReferenceSystem, QgsProject, QgsReadWriteContext, QgsMapLayerType, QgsRasterLayer, QgsSettings, QgsPointXY) 
 
 # Import the code for the dialog
 from .GeorefExtension_dialog import GeorefExtensionDialog
@@ -50,6 +50,34 @@ else:
 
 
 
+class GeorefCrosshairItem(QgsMapCanvasItem):
+    """Crosshair item for georeferencer canvas"""
+    def __init__(self, canvas):
+        super().__init__(canvas)
+        self._canvas = canvas
+        self.setZValue(9999)
+        self.pen = QPen(QColor(255, 0, 0, 255))
+        self.pen.setWidth(1)
+        self.pen.setCosmetic(True)
+        self.center = None
+        self.setVisible(False)
+
+    def paint(self, painter, option, widget=None):
+        if not self.center:
+            return
+        painter.setPen(self.pen)
+        rect = self._canvas.viewport().rect()
+        painter.drawLine(0, int(self.center.y()), rect.width(), int(self.center.y()))
+        painter.drawLine(int(self.center.x()), 0, int(self.center.x()), rect.height())
+
+    def update_position(self, pos):
+        self.center = pos
+        self.update()
+
+    def boundingRect(self):
+        return QRectF(self._canvas.viewport().rect()) if self._canvas else QRectF()
+
+
 class GeorefExtension:
     """QGIS Plugin Implementation."""
 
@@ -64,6 +92,7 @@ class GeorefExtension:
         # Save reference to the QGIS interface
         self.iface = iface
         self.toolBarFile = None
+        self.crosshair_item = None
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
         # initialize locale
@@ -115,6 +144,12 @@ class GeorefExtension:
 
             canvas = self.iface.mainWindow().findChild(QgsMapCanvas,'georefCanvas')
             canvas.layersChanged.connect(self.getRasterParameters)
+            
+            # Initialize crosshairs for georefCanvas
+            if canvas and not self.crosshair_item:
+                self.crosshair_item = GeorefCrosshairItem(canvas)
+                canvas.xyCoordinates.connect(self.update_crosshair_position)
+                self.crosshair_item.setVisible(True)
 
             action = self.iface.mainWindow().findChild(QAction, 'mActionShowGeoreferencer')
             action.triggered.disconnect(self.addButtons)
@@ -178,6 +213,26 @@ class GeorefExtension:
             self.gui.removeToolBar(self.extToolBar)
         except:
             pass
+        
+        # cleanup crosshair items
+        if self.crosshair_item:
+            try:
+                canvas = self.iface.mainWindow().findChild(QgsMapCanvas,'georefCanvas')
+                if canvas:
+                    canvas.xyCoordinates.disconnect(self.update_crosshair_position)
+                    canvas.scene().removeItem(self.crosshair_item)
+            except:
+                pass
+            self.crosshair_item = None
+
+    def update_crosshair_position(self, point):
+        """Update crosshair position when mouse moves on georef canvas"""
+        if self.crosshair_item:
+            canvas = self.iface.mainWindow().findChild(QgsMapCanvas,'georefCanvas')
+            if canvas:
+                m2p = canvas.getCoordinateTransform()
+                pixel_pos = m2p.transform(QgsPointXY(point))
+                self.crosshair_item.update_position(pixel_pos)
 
     def atof(self,txt):
         return float('%s.%s' % (re.sub(r'[^\d-]','',re.sub(r'(.+)[,.]\d+$',r'\1',txt)),re.search(r'(\d+)$',txt)[0]))
@@ -537,7 +592,10 @@ class GeorefExtension:
                 
                 dst_ds = gdal.Warp(destNameOrDestDS=destFile,srcDSOrSrcDSTab=src_ds_temp, options=warp_opts)
                 if dst_ds:
-                    with open(destFile, 'r+') as f:
+                    with open(destFile, 
+                              'r+',
+                              encoding='utf-8',
+                              errors='surrogateescape') as f:
                         content = f.read()
                         f.seek(0)
                         f.truncate()

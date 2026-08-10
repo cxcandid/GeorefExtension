@@ -3,7 +3,7 @@
 [general]
 name=Georeferencer Extension
 description=Extension to the QGIS 3.x/4.x Georeferencer
-version=4.0.0
+version=4.1.0
 qgisMinimumVersion=3.0
 qgisMaximumVersion=4.99
 author=Christoph Candido
@@ -21,7 +21,8 @@ repository=https://github.com/cxcandid/GeorefExtension
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=4.0.0 : QGIS 4.0 support tested and enabled
+changelog=4.1.0 : integrated "Georeferencer Extended Crosshairs" (by Ian Hay - https://github.com/ianhay/georeferencer_extended_crosshairs), Unicode decode error fix (by Nico Vink)
+4.0.0 : QGIS 4.0 support tested and enabled
 3.0.9 : added Qt6 support, fixed a bug that occurs when an existing VRT with “Multiply” blending mode is not replaced
 3.0.8 : added support for GDAL Open Options (i.e. PDF:2:d:/test.pdf|option:dpi=250), dialog box extension for editing the raster data source, multiple code fixes to prevent errors
 3.0.7 : minor changes to make it more fail-safe, fixed errors when running under Mac OS
